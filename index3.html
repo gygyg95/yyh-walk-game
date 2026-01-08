@@ -101,8 +101,8 @@ canvas.height = window.innerHeight * 0.8;
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(currentCharacterImage, x, y, 80, 80);
-    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 80);
+    ctx.drawImage(currentCharacterImage, x, y, 80, 120);
+    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 120);
 
     if (!isTypingMessage) {
         if (x > (treeX - 20) && x < (treeX + 60)) {
@@ -198,8 +198,7 @@ function showDialogue() {
     flashTreeForeverEffect();
 
     setTimeout(() => {
-        showTypingMessage(`不愧是聰明的你，
-我就知道你一定能發現這個被藏起來的地圖。
+        showTypingMessage(`不愧是聰明的你，我就知道你一定能發現這個被藏起來的地圖。
 
 這個小小的網頁遊戲，是我花了不少心思，悄悄為你準備的。
 或許它並不完美，但我希望，它能在你的世界裡，留下那麼一點溫柔的痕跡。
