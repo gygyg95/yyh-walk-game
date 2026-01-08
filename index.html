@@ -59,6 +59,20 @@ button:active {
 <audio id="bgm" src="assets/bgm.mp3" loop></audio>
 
 <script>
+
+
+    
+(() => {
+  const key = "didReloadOnce_index1";
+  if (!sessionStorage.getItem(key)) {
+    sessionStorage.setItem(key, "1");
+    location.reload();
+  }
+})();
+
+
+
+    
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
