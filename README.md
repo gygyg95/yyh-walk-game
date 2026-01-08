@@ -1,1 +1,1 @@
-# yyh-walk-game
+# cnn-walk-game

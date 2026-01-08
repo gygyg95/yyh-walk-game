@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🛰️</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    touch-action: manipulation;
+}
+#gameCanvas {
+    background: url('assets2/grass_bg.png') repeat;
+    background-size: cover;
+    width: 100%;
+    height: 80vh;
+}
+.controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    gap: 20px; /* 按鈕之間有間距 */
+}
+button {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    background: #ffffff;
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    transition: background 0.3s, transform 0.2s;
+    font-size: 32px;
+    font-weight: bold;
+    display: flex; /* ✨讓文字居中用flex */
+    align-items: center; /* ✨垂直置中 */
+    justify-content: center; /* ✨水平置中 */
+    padding: 0; /* 避免有內間距偏掉 */
+}
+button:active {
+    background: #e0f7fa;
+    transform: scale(0.95);
+}
+</style>
+
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<div class="controls">
+    <button onclick="moveLeft()">⇦</button>
+    <button onclick="moveRight()">⇨</button>
+</div>
+
+<audio id="bgm" src="assets2/bgm.mp3" loop></audio>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+
+// 角色圖
+let character = new Image();
+character.src = 'assets2/character.png';
+let character2 = new Image();
+character2.src = 'assets2/character2.png';
+let currentCharacterImage = character;  // 目前顯示的角色圖
+
+
+
+
+let tree = new Image();
+tree.src = 'assets2/tree.png';
+let tree2 = new Image();
+tree2.src = 'assets2/tree2.png';
+let bgm = document.getElementById('bgm');
+let x = 100;
+let y = 390;
+let speed = 7.5;
+let dialogueShown = false;
+let bgmPlayed = false;
+let treeX = canvas.width / 2 + 40;
+let treeDirection = 1;
+let treeMoveDistance = 0;
+let currentTreeImage = tree;
+let leftWallDialogueCooldown = false;
+let rightWallDialogueCooldown = false;
+let needToShowWallDialogue = false;
+let needToShowRightWallDialogue = false;
+let treeY = 250;
+let storyLocked = false; //  劇情鎖聊天後開啟
+
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight * 0.8;
+
+function dropTree(callback) {
+    const targetY = 410;
+    const duration = 3000; // 1秒
+    const startY = treeY;
+    const startTime = performance.now();
+
+    function animateDrop(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        treeY = startY + (targetY - startY) * progress;
+        draw();
+
+        if (progress < 1) {
+            requestAnimationFrame(animateDrop);
+        } else {
+            callback(); // 下降完成後，執行callback（=啟動左右搖）
+        }
+    }
+
+    requestAnimationFrame(animateDrop);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(currentCharacterImage, x, y, 80, 80);
+    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, treeY, 80, 80);
+
+    // 角色靠近樹就觸發對話
+    if (x > (treeX + treeMoveDistance - 20) && x < (treeX + treeMoveDistance + 60)) {
+    if (!dialogueShown && !storyLocked) { // ✨ 加一個storyLocked判斷！
+        setTimeout(showDialogue, 300);
+        dialogueShown = true;
+    }
+} else {
+    dialogueShown = false;
+}
+
+}
+
+
+function animateTree() {
+    treeMoveDistance += treeDirection * 0.5;
+    if (treeMoveDistance > 3 || treeMoveDistance < -3) {
+        treeDirection *= -1;
+    }
+    draw();
+    requestAnimationFrame(animateTree); // 注意只自己呼叫自己
+}
+
+function randomTreeEffect() {
+    setTimeout(() => {
+        currentTreeImage = tree2;
+        draw();
+        setTimeout(() => {
+            currentTreeImage = tree;
+            draw();
+            setTimeout(() => {
+                currentTreeImage = tree2;
+                draw();
+                setTimeout(() => {
+                    currentTreeImage = tree;
+                    draw();
+                    setTimeout(() => {
+                        currentTreeImage = tree2;
+                        draw();
+                        setTimeout(() => {
+                            currentTreeImage = tree;
+                            draw();
+                            randomTreeEffect();
+                        }, 250);
+                    }, 250);
+                }, 250);
+            }, 250);
+        }, 250);
+    }, Math.random() * 2000 + 2000);
+}
+
+function randomCharacterEffect() {
+    setTimeout(() => {
+        currentCharacterImage = character2;
+        draw();
+        setTimeout(() => {
+            currentCharacterImage = character;
+            draw();
+            randomCharacterEffect(); // 無限循環
+        }, 500); // 閃一下的時間
+    }, Math.random() * 3000 + 2000); // 隨機2~5秒閃一次
+}
+
+function randomBgEffect() {
+    setTimeout(() => {
+        canvas.style.backgroundImage = "url('assets2/grass_bg2.png')";
+        setTimeout(() => {
+            canvas.style.backgroundImage = "url('assets2/grass_bg.png')";
+            setTimeout(() => {
+                canvas.style.backgroundImage = "url('assets2/grass_bg2.png')";
+                setTimeout(() => {
+                    canvas.style.backgroundImage = "url('assets2/grass_bg.png')";
+                    setTimeout(() => {
+                        canvas.style.backgroundImage = "url('assets2/grass_bg2.png')";
+                        setTimeout(() => {
+                            canvas.style.backgroundImage = "url('assets2/grass_bg.png')";
+                            randomBgEffect();
+                        }, 250);
+                    }, 250);
+                }, 250);
+            }, 250);
+        }, 250);
+    }, Math.random() * 2000 + 2000);
+}
+
+function playBGM() {
+    if (!bgmPlayed) {
+        bgm.play();
+        bgmPlayed = true;
+    }
+}
+
+function moveLeft() {
+    playBGM();
+    x -= speed;
+    if (x <= 0) {
+        x = 0;
+        if (!leftWallDialogueCooldown) {
+            leftWallDialogueCooldown = true;
+            needToShowWallDialogue = true;
+            setTimeout(() => {
+                leftWallDialogueCooldown = false;
+            }, 3000);
+        }
+    }
+    draw();
+}
+
+function moveRight() {
+    playBGM();
+    x += speed;
+    if (x > canvas.width - 80) {
+        x = canvas.width - 80;
+        if (!rightWallDialogueCooldown) {
+            rightWallDialogueCooldown = true;
+            needToShowRightWallDialogue = true;
+            setTimeout(() => {
+                rightWallDialogueCooldown = false;
+            }, 3000);
+        }
+    }
+    draw();
+}
+
+
+function showDialogue() {
+    let choice = confirm("你又遇到一隻迷路的怪人了！\n要跟他聊天嗎？\n(確定=喜勒衝幹 / 取消=快步逃跑)"); 
+    if (choice) {
+        storyLocked = true; 
+        alert("那我要開始認真說了喔");
+        setTimeout(() => {
+                            showTypingMessage(`嘿雨軒～
+                                                很開心可以認識你，
+                                                希望妳可以一直平平安安，快快樂樂。
+                                                我知道妳是偶爾會半夜破防的人，所以真的有壓力的時候，要好好地釋放，不要一個人悶著。
+                                                同時呢也要記得，相信自己。妳是我認識的人裡，最認真最棒的那一個。
+                                                在這裡默默祝福妳，新的一年也要繼續帥氣、繼續開心，也可以偶爾…偷懶一下沒關係。
+                                                還有一個隱藏地圖希望你必須找到～✌️`);
+        }, 50);
+    } else {
+        alert("拜託聊一下啦💔");
+    }
+}
+
+// 打字機效果函數
+function showTypingMessage(message) {
+    isTypingMessage = true;  // ✨ 打字期間鎖住互動
+
+    const typingDiv = document.createElement('div');
+    typingDiv.style.position = 'fixed';
+    typingDiv.style.top = '40%';
+    typingDiv.style.left = '50%';
+    typingDiv.style.transform = 'translate(-50%, -50%)';
+    typingDiv.style.background = 'rgba(255, 255, 255, 0.9)';
+    typingDiv.style.padding = '20px';
+    typingDiv.style.borderRadius = '10px';
+    typingDiv.style.fontSize = '18px';
+    typingDiv.style.fontFamily = 'monospace';
+    typingDiv.style.color = '#000';
+    typingDiv.style.zIndex = '9999';
+    typingDiv.style.width = '80%';
+    typingDiv.style.maxWidth = '500px';
+    typingDiv.style.whiteSpace = 'pre-wrap';
+    typingDiv.style.lineHeight = '1.5';
+    typingDiv.style.transition = 'opacity 1s ease'; // ✨ 淡出動畫
+    document.body.appendChild(typingDiv);
+
+    let index = 0;
+    const interval = setInterval(() => {
+        if (index < message.length) {
+            typingDiv.textContent += message.charAt(index);
+            index++;
+        } else {
+            clearInterval(interval);
+            setTimeout(() => {
+                typingDiv.style.opacity = '0'; //  觸發淡出
+                setTimeout(() => {
+                    typingDiv.remove();          //  淡出完刪除元素
+                    spawnHearts();               //  淡出完觸發小愛心
+                    isTypingMessage = false;     //  解除鎖定
+                }, 1000);
+            }, 1000);
+        }
+    }, 100);
+}
+
+function spawnHearts() {
+    for (let i = 0; i < 30; i++) {  //  產生n個愛心
+        const heart = document.createElement('div');
+        heart.textContent = '❤️';
+        heart.style.position = 'fixed';
+        heart.style.left = '50%';
+        heart.style.top = '50%';
+        heart.style.transform = 'translate(-50%, -50%)';
+        heart.style.fontSize = `${Math.random() * 20 + 20}px`; // 20~40px隨機大小
+        heart.style.opacity = '1';
+        heart.style.transition = 'all 2s ease';
+        heart.style.zIndex = '9999';
+        document.body.appendChild(heart);
+
+        const randomX = (Math.random() - 0.5) * 200; // 左右飄
+        const randomY = -(Math.random() * 300 + 200); // 往上飄
+
+        setTimeout(() => {
+            heart.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            heart.style.opacity = '0';
+        }, 100);
+
+        setTimeout(() => {
+            heart.remove();
+        }, 3000);
+    }
+}
+
+
+function gameLoop() {
+    if (needToShowWallDialogue) {
+        needToShowWallDialogue = false;
+        alert("就這麼想回去上個地圖啊！");
+        window.location.href = "index.html"; // ✨ 加這行轉跳！
+    }
+if (needToShowRightWallDialogue) {
+    needToShowRightWallDialogue = false;
+    alert("恭喜發現隱藏地圖！");
+    window.location.href = "index3.html";
+}
+
+    requestAnimationFrame(gameLoop);
+}
+
+// 啟動
+
+draw();
+dropTree(() => {
+    animateTree();  // 開始搖動
+});
+randomTreeEffect();
+randomBgEffect();
+randomCharacterEffect(); //  新加這行，讓角色可以隨機閃現
+gameLoop();
+</script>
+
+</body>
+</html>
