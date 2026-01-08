@@ -256,13 +256,18 @@ function showDialogue() {
         storyLocked = true; 
         alert("那我要開始認真說了喔");
         setTimeout(() => {
-                            showTypingMessage(`嘿雨軒～
-                                                很開心可以認識你，
-                                                希望妳可以一直平平安安，快快樂樂。
-                                                我知道妳是偶爾會半夜破防的人，所以真的有壓力的時候，要好好地釋放，不要一個人悶著。
-                                                同時呢也要記得，相信自己。妳是我認識的人裡，最認真最棒的那一個。
-                                                在這裡默默祝福妳，新的一年也要繼續帥氣、繼續開心，也可以偶爾…偷懶一下沒關係。
-                                                還有一個隱藏地圖希望你必須找到～✌️`);
+                            showTypingMessage(`嘿雨軒～很開心能認識你。
+
+你真的一直給我一種很特別的感覺，很有想法，也很清楚自己想做什麼、想追求什麼，
+這份篤定與認真，是我很欣賞、也很佩服的地方。
+
+不過那天一起去天文館，我又看見了不一樣的你。
+會投入、會放電、會像小孩子一樣單純開心，那一刻真的很可愛，也讓人印象很深。
+
+所以我真心希望，你以後的每一天，都能像那天一樣自在又快樂；
+也別忘了相信自己，在我認識的人裡，你真的已經是很認真、也很棒的那一個了。
+
+最後還有一個隱藏地圖你必須找他～✌️`);
         }, 50);
     } else {
         alert("拜託聊一下啦💔");
@@ -314,7 +319,7 @@ function showTypingMessage(message) {
 function spawnHearts() {
     for (let i = 0; i < 30; i++) {  //  產生n個愛心
         const heart = document.createElement('div');
-        heart.textContent = '❤️';
+        heart.textContent = '💙';
         heart.style.position = 'fixed';
         heart.style.left = '50%';
         heart.style.top = '50%';
