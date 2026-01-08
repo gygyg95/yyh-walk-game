@@ -228,7 +228,7 @@ function showTypingMessage(message) {
     typingDiv.style.background = 'rgba(255, 255, 255, 0.9)';
     typingDiv.style.padding = '20px';
     typingDiv.style.borderRadius = '10px';
-    typingDiv.style.fontSize = '18px';
+    typingDiv.style.fontSize = '16px';
     typingDiv.style.fontFamily = 'monospace';
     typingDiv.style.color = '#000';
     typingDiv.style.zIndex = '9999';
@@ -283,8 +283,8 @@ function createSingleFirework() {
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(currentCharacterImage, x, y, 80, 80);
-        ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 80);
+        ctx.drawImage(currentCharacterImage, x, y, 80, 120);
+        ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 120);
 
         particles.forEach(p => {
             p.x += Math.cos(p.angle) * p.speed;
