@@ -101,7 +101,7 @@ canvas.height = window.innerHeight * 0.8;
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(currentCharacterImage, x, y, 80, 120);
-    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, 410, 80, 80);
+    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, 410, 80, 120);
 
     // 角色靠近樹就觸發對話
     if (x > (treeX + treeMoveDistance - 20) && x < (treeX + treeMoveDistance + 60)) {
