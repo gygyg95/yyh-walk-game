@@ -44,7 +44,7 @@ button {
 button:active {
     background: #e0f7fa;
     transform: scale(0.95);
-}
+} 
 </style>
 
 </head>
@@ -70,7 +70,17 @@ button:active {
   }
 })();
 
+// ====== 比例縮放設定（方法A）======
+const BASE_WIDTH = 375;   // 設計基準寬（手機）
+const BASE_HEIGHT = 667;  // 設計基準高
 
+function scaleX(px) {
+  return px * canvas.width / BASE_WIDTH;
+}
+
+function scaleY(px) {
+  return px * canvas.height / BASE_HEIGHT;
+}
 
     
 const canvas = document.getElementById('gameCanvas');
@@ -114,9 +124,33 @@ canvas.height = window.innerHeight * 0.8;
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(currentCharacterImage, x, y, 80, 120);
-    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, 410, 80, 120);
+    //ctx.drawImage(currentCharacterImage, x, y, 80, 120);
+    //ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, 410, 80, 120);
 
+
+  // 角色尺寸（按比例）
+  const charW = scaleX(80);
+  const charH = scaleY(120);
+
+  ctx.drawImage(
+    currentCharacterImage,
+    scaleX(x),
+    scaleY(y),
+    charW,
+    charH
+  );
+
+  // 樹尺寸（同樣比例）
+  const treeW = scaleX(80);
+  const treeH = scaleY(120);
+
+  ctx.drawImage(
+    currentTreeImage,
+    scaleX(treeX + treeMoveDistance),
+    scaleY(410),
+    treeW,
+    treeH
+    );
     // 角色靠近樹就觸發對話
     if (x > (treeX + treeMoveDistance - 20) && x < (treeX + treeMoveDistance + 60)) {
         if (!dialogueShown) {
