@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🎨</title>
-
 <style>
 body {
     margin: 0;
@@ -15,21 +14,18 @@ body {
     align-items: center;
     touch-action: manipulation;
 }
-
 #gameCanvas {
     background: url('assets/grass_bg.png') repeat;
     background-size: cover;
     width: 100%;
     height: 80vh;
 }
-
 .controls {
     display: flex;
     justify-content: center;
     margin-top: 10px;
-    gap: 20px;
+    gap: 20px; /* 按鈕之間有間距 */
 }
-
 button {
     width: 80px;
     height: 80px;
@@ -37,58 +33,24 @@ button {
     border: none;
     background: #ffffff;
     box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    transition: background 0.3s, transform 0.2s;
     font-size: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight: bold;
+    display: flex; /* ✨讓文字居中用flex */
+    align-items: center; /* ✨垂直置中 */
+    justify-content: center; /* ✨水平置中 */
+    padding: 0; /* 避免有內間距偏掉 */
 }
-
 button:active {
+    background: #e0f7fa;
     transform: scale(0.95);
-}
-
-/* ====== 遊戲內對話框 ====== */
-#dialogueOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(255,255,255,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-#dialogueBox {
-    background: #111;
-    color: #fff;
-    padding: 20px;
-    border-radius: 16px;
-    max-width: 80%;
-    text-align: center;
-    font-size: 16px;
-}
-
-.dialogue-buttons {
-    margin-top: 16px;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-
-.dialogue-buttons button {
-    width: auto;
-    height: auto;
-    padding: 10px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-}
+} 
 </style>
-</head>
 
+</head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
-
 <div class="controls">
     <button onclick="moveLeft()">⇦</button>
     <button onclick="moveRight()">⇨</button>
@@ -96,97 +58,74 @@ button:active {
 
 <audio id="bgm" src="assets/bgm.mp3" loop></audio>
 
-<!-- 對話框 -->
-<div id="dialogueOverlay">
-    <div id="dialogueBox">
-        <div id="dialogueText"></div>
-        <div class="dialogue-buttons">
-            <button onclick="dialogueYes()">好啦聽你說一下</button>
-            <button onclick="dialogueNo()">快步逃跑</button>
-        </div>
-    </div>
-</div>
-
 <script>
+
+
+    
+(() => {
+  const key = "didReloadOnce_index1";
+  if (!sessionStorage.getItem(key)) {
+    sessionStorage.setItem(key, "1");
+    location.reload();
+  }
+})();
+
+
+
+    
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight * 0.8;
-
-// 圖片
-const character = new Image();
+// 角色圖
+let character = new Image();
 character.src = 'assets/character.png';
-const character2 = new Image();
+let character2 = new Image();
 character2.src = 'assets/character2.png';
-let currentCharacterImage = character;
+let currentCharacterImage = character;  // ✨目前顯示的角色圖
 
-const tree = new Image();
+// 樹圖
+let tree = new Image();
 tree.src = 'assets/tree.png';
-const tree2 = new Image();
+let tree2 = new Image();
 tree2.src = 'assets/tree2.png';
 let currentTreeImage = tree;
 
-// 音樂
-const bgm = document.getElementById('bgm');
-let bgmPlayed = false;
+let bgm = document.getElementById('bgm');
 
-// 狀態
+
 let x = 100;
 let y = 430;
 let speed = 7.5;
 let dialogueShown = false;
-
+let bgmPlayed = false;
 let treeX = canvas.width / 2 + 40;
-let treeMoveDistance = 0;
+let treeY = 410;
 let treeDirection = 1;
+let treeMoveDistance = 0;
+let leftWallDialogueCooldown = false;
+let needToShowWallDialogue = false;
+let treeSpecialEffectActive = false;
+let isTypingMessage = false;
+let treeForeverFlash = false;
+    
 
-// ====== 對話框控制 ======
-const overlay = document.getElementById("dialogueOverlay");
-const textBox = document.getElementById("dialogueText");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight * 0.8;
 
-function showDialogue() {
-    textBox.innerHTML = `
-        嗨～還記得嗎？<br>
-        這是我們第一個說要一起來的地方！<br><br>
-        要跟他聊天嗎？
-    `;
-    overlay.style.display = "flex";
-}
-
-function hideDialogue() {
-    overlay.style.display = "none";
-    dialogueShown = false;
-}
-
-function dialogueYes() {
-    textBox.innerHTML = "即將前往下一張地圖 🚀";
-    setTimeout(() => {
-        window.location.href = "index2.html";
-    }, 1000);
-}
-
-function dialogueNo() {
-    textBox.innerHTML = "沒有這個選擇 🤡";
-    setTimeout(hideDialogue, 1000);
-}
-
-// ====== 繪製 ======
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(currentCharacterImage, x, y, 80, 120);
     ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, 410, 80, 120);
 
-    const nearTree =
-        x > (treeX + treeMoveDistance - 20) &&
-        x < (treeX + treeMoveDistance + 60);
 
-    if (nearTree && !dialogueShown) {
-        dialogueShown = true;
-        showDialogue();
-    }
 
-    if (!nearTree && overlay.style.display === "none") {
+    // 角色靠近樹就觸發對話
+    if (x > (treeX + treeMoveDistance - 20) && x < (treeX + treeMoveDistance + 60)) {
+        if (!dialogueShown) {
+            setTimeout(showDialogue, 300);
+            dialogueShown = true;
+        }
+    } else {
         dialogueShown = false;
     }
 }
@@ -200,7 +139,68 @@ function animateTree() {
     requestAnimationFrame(animateTree);
 }
 
-// ====== 控制 ======
+function randomTreeEffect() {
+    setTimeout(() => {
+        currentTreeImage = tree2;
+        draw();
+        setTimeout(() => {
+            currentTreeImage = tree;
+            draw();
+            setTimeout(() => {
+                currentTreeImage = tree2;
+                draw();
+                setTimeout(() => {
+                    currentTreeImage = tree;
+                    draw();
+                    setTimeout(() => {
+                        currentTreeImage = tree2;
+                        draw();
+                        setTimeout(() => {
+                            currentTreeImage = tree;
+                            draw();
+                            randomTreeEffect();
+                        }, 250);
+                    }, 250);
+                }, 250);
+            }, 250);
+        }, 250);
+    }, Math.random() * 2000 + 2000);
+}
+
+function randomCharacterEffect() {
+    setTimeout(() => {
+        currentCharacterImage = character2;
+        draw();
+        setTimeout(() => {
+            currentCharacterImage = character;
+            draw();
+            randomCharacterEffect(); // 無限循環
+        }, 500); // 閃一下的時間
+    }, Math.random() * 3000 + 2000); // 隨機2~5秒閃一次
+}
+
+function randomBgEffect() {
+    setTimeout(() => {
+        canvas.style.backgroundImage = "url('assets/grass_bg2.png')";
+        setTimeout(() => {
+            canvas.style.backgroundImage = "url('assets/grass_bg.png')";
+            setTimeout(() => {
+                canvas.style.backgroundImage = "url('assets/grass_bg2.png')";
+                setTimeout(() => {
+                    canvas.style.backgroundImage = "url('assets/grass_bg.png')";
+                    setTimeout(() => {
+                        canvas.style.backgroundImage = "url('assets/grass_bg2.png')";
+                        setTimeout(() => {
+                            canvas.style.backgroundImage = "url('assets/grass_bg.png')";
+                            randomBgEffect();
+                        }, 250);
+                    }, 250);
+                }, 250);
+            }, 250);
+        }, 250);
+    }, Math.random() * 2000 + 2000);
+}
+
 function playBGM() {
     if (!bgmPlayed) {
         bgm.play();
@@ -210,19 +210,52 @@ function playBGM() {
 
 function moveLeft() {
     playBGM();
-    x = Math.max(0, x - speed);
+    x -= speed;
+    if (x <= 0) {
+        x = 0;
+        if (!leftWallDialogueCooldown) {
+            leftWallDialogueCooldown = true;
+            needToShowWallDialogue = true;
+            setTimeout(() => {
+                leftWallDialogueCooldown = false;
+            }, 3000);
+        }
+    }
     draw();
 }
 
 function moveRight() {
     playBGM();
-    x = Math.min(canvas.width - 80, x + speed);
+    x += speed;
+    if (x > canvas.width - 80) x = canvas.width - 80;
     draw();
 }
 
-// 啟動
+function showDialogue() {
+    let choice = confirm("嗨~還記得嗎?\n這是我們第一個說要一起來的地方！\n要跟他聊天嗎？\n(確定=阿哩喜勒靠 / 取消=快步逃跑)");
+    if (choice) {
+        alert("即將前往下一張地圖🚀");
+        window.location.href = "index2.html";
+    } else {
+        alert("沒有這個選擇🤡");
+    }
+}
+
+function gameLoop() {
+    if (needToShowWallDialogue) {
+        needToShowWallDialogue = false;
+        alert("沒這麼容易給你逃走！");
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+// 啟動！
 draw();
 animateTree();
+randomTreeEffect();
+randomBgEffect();
+randomCharacterEffect(); // ✨ 新加這行，讓角色可以隨機閃現
+gameLoop();
 </script>
 
 </body>
