@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>㊙️</title>
+
 <style>
 body {
     margin: 0;
@@ -14,18 +15,21 @@ body {
     align-items: center;
     touch-action: manipulation;
 }
+
 #gameCanvas {
     background: url('assets3/grass_bg.png') repeat;
     background-size: cover;
     width: 100%;
     height: 80vh;
 }
+
 .controls {
     display: flex;
     justify-content: center;
     margin-top: 10px;
     gap: 20px;
 }
+
 button {
     width: 80px;
     height: 80px;
@@ -33,23 +37,60 @@ button {
     border: none;
     background: #ffffff;
     box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-    transition: background 0.3s, transform 0.2s;
     font-size: 32px;
-    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
 }
+
 button:active {
-    background: #e0f7fa;
     transform: scale(0.95);
+}
+
+/* ===== 遊戲內對話 ===== */
+#dialogueOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+#dialogueBox {
+    background: rgba(255,255,255,0.95);
+    color: #000;
+    padding: 20px;
+    border-radius: 14px;
+    width: 85%;
+    max-width: 520px;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.dialogue-buttons {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.dialogue-buttons button {
+    width: auto;
+    height: auto;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 14px;
 }
 </style>
 </head>
+
 <body>
 
 <canvas id="gameCanvas"></canvas>
+
 <div class="controls">
     <button onclick="moveLeft()">⇦</button>
     <button onclick="moveRight()">⇨</button>
@@ -57,18 +98,27 @@ button:active {
 
 <audio id="bgm" src="assets3/bgm.mp3" loop></audio>
 
+<!-- 對話層 -->
+<div id="dialogueOverlay">
+    <div id="dialogueBox">
+        <div id="dialogueText"></div>
+        <div class="dialogue-buttons" id="dialogueBtns"></div>
+    </div>
+</div>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight * 0.8;
 
-// 角色圖
+/* ===== 資源 ===== */
 const character = new Image();
 character.src = 'assets3/character.png';
 const character2 = new Image();
 character2.src = 'assets3/character2.png';
 let currentCharacterImage = character;
 
-// 樹圖
 const tree = new Image();
 tree.src = 'assets3/tree.png';
 const tree2 = new Image();
@@ -81,258 +131,33 @@ let currentTreeImage = tree;
 
 const bgm = document.getElementById('bgm');
 
+/* ===== 狀態 ===== */
 let x = 100;
 let y = 430;
 let speed = 7.5;
-let dialogueShown = false;
 let bgmPlayed = false;
+
 let treeX = canvas.width / 2 + 40;
 let treeY = 410;
-let treeDirection = 1;
 let treeMoveDistance = 0;
-let leftWallDialogueCooldown = false;
-let needToShowWallDialogue = false;
-let treeSpecialEffectActive = false;
+let treeDirection = 1;
+
+let dialogueShown = false;
 let isTypingMessage = false;
 let treeForeverFlash = false;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight * 0.8;
+/* ===== UI ===== */
+const overlay = document.getElementById('dialogueOverlay');
+const textBox = document.getElementById('dialogueText');
+const btnBox = document.getElementById('dialogueBtns');
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(currentCharacterImage, x, y, 80, 120);
-    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 120);
-
-    if (!isTypingMessage) {
-        if (x > (treeX - 20) && x < (treeX + 60)) {
-            if (!dialogueShown) {
-                setTimeout(showDialogue, 300);
-                dialogueShown = true;
-            }
-        } else {
-            dialogueShown = false;
-        }
-    }
-}
-
-function animateTree() {
-    treeMoveDistance += treeDirection * 0.5;
-    if (treeMoveDistance > 3 || treeMoveDistance < -3) {
-        treeDirection *= -1;
-    }
-    draw();
-    requestAnimationFrame(animateTree);
-}
-
-function randomTreeEffect() {
-    if (treeSpecialEffectActive || treeForeverFlash) return;
-    setTimeout(() => {
-        currentTreeImage = tree2;
-        draw();
-        setTimeout(() => {
-            currentTreeImage = tree;
-            draw();
-            randomTreeEffect();
-        }, 250);
-    }, Math.random() * 2000 + 2000);
-}
-
-function randomCharacterEffect() {
-    setTimeout(() => {
-        currentCharacterImage = character2;
-        draw();
-        setTimeout(() => {
-            currentCharacterImage = character;
-            draw();
-            randomCharacterEffect();
-        }, 500);
-    }, Math.random() * 3000 + 2000);
-}
-
-function randomBgEffect() {
-    setTimeout(() => {
-        canvas.style.backgroundImage = "url('assets3/grass_bg.png')";
-        setTimeout(() => {
-            canvas.style.backgroundImage = "url('assets3/grass_bg2.png')";
-            randomBgEffect();
-        }, 250);
-    }, Math.random() * 2000 + 2000);
-}
-
-function playBGM() {
-    if (!bgmPlayed) {
-        bgm.play();
-        bgmPlayed = true;
-    }
-}
-
-function moveLeft() {
-    playBGM();
-    x -= speed;
-    if (x <= 0) {
-        x = 0;
-        if (!leftWallDialogueCooldown) {
-            leftWallDialogueCooldown = true;
-            needToShowWallDialogue = true;
-            setTimeout(() => {
-                leftWallDialogueCooldown = false;
-            }, 3000);
-        }
-    }
-    draw();
-}
-
-function moveRight() {
-    playBGM();
-    x += speed;
-    if (x > canvas.width - 80) x = canvas.width - 80;
-    draw();
-}
-
-// 碰到樹後觸發打字，並永久tree5/4
-function showDialogue() {
-    if (treeForeverFlash) return;
-    treeSpecialEffectActive = true;
-    treeForeverFlash = true;
-    flashTreeForeverEffect();
-
-    setTimeout(() => {
-        showTypingMessage(`不愧是聰明的你，我就知道你一定能發現這個被藏起來的地圖。
-
-這個小小的網頁遊戲，是我花了不少心思，悄悄為你準備的。
-
-或許它並不完美，但我希望，它能在你的世界裡，留下那麼一點溫柔的痕跡。
-
-其實我一直很嚮往那樣的未來，醒來就能看到你的笑容，上班的時候會開始想，下班要煮什麼好吃的給你，
-
-也很想在往後的日子裡，和你一起走過每一個平凡的日子、每一個節日，慢慢探索這個世界。
-
-這些想法，我都是很認真地放在心裡的，只是想誠實地告訴你，也想問問你，
-
-你願不願意，和我一起走看看呢？
-
-(我不管我就是要先放煙火)`);
-    }, 1000);
-}
-
-// 打字機 + 保留淡淡文字 + 無限煙火
-function showTypingMessage(message) {
-    isTypingMessage = true;
-
-    const typingDiv = document.createElement('div');
-    typingDiv.style.position = 'fixed';
-    typingDiv.style.top = '40%';
-    typingDiv.style.left = '50%';
-    typingDiv.style.transform = 'translate(-50%, -50%)';
-    typingDiv.style.background = 'rgba(255, 255, 255, 0.9)';
-    typingDiv.style.padding = '20px';
-    typingDiv.style.borderRadius = '10px';
-    typingDiv.style.fontSize = '16px';
-    typingDiv.style.fontFamily = 'monospace';
-    typingDiv.style.color = '#000';
-    typingDiv.style.zIndex = '9999';
-    typingDiv.style.width = '80%';
-    typingDiv.style.maxWidth = '500px';
-    typingDiv.style.whiteSpace = 'pre-wrap';
-    typingDiv.style.lineHeight = '1.5';
-    typingDiv.style.transition = 'opacity 1s ease';
-    document.body.appendChild(typingDiv);
-
-    let index = 0;
-    const interval = setInterval(() => {
-        if (index < message.length) {
-            typingDiv.textContent += message.charAt(index);
-            index++;
-        } else {
-            clearInterval(interval);
-            setTimeout(() => {
-                typingDiv.style.opacity = '0.5';
-                isTypingMessage = false;
-                triggerFireworks(); // 開始無限煙火
-            }, 1000);
-        }
-    }, 100);
-}
-
-// 無限放煙火
-function triggerFireworks() {
-    createSingleFirework();
-    setTimeout(triggerFireworks, 500); // 每0.5秒持續放煙火
-}
-
-function createSingleFirework() {
-    const colors = ['#ff4c4c', '#ffd93d', '#3dd9ff', '#8c52ff', '#ff6ec7'];
-    const fireworkX = Math.random() * canvas.width;
-    const fireworkY = Math.random() * canvas.height / 2;
-    const particles = [];
-
-    for (let i = 0; i < 30; i++) {
-        particles.push({
-            x: fireworkX,
-            y: fireworkY,
-            radius: 2 + Math.random() * 2,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            angle: Math.random() * 2 * Math.PI,
-            speed: Math.random() * 5 + 2,
-            alpha: 1
-        });
-    }
-
-    function animateFirework() {
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(currentCharacterImage, x, y, 80, 120);
-        ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 120);
-
-        particles.forEach(p => {
-            p.x += Math.cos(p.angle) * p.speed;
-            p.y += Math.sin(p.angle) * p.speed;
-            p.alpha -= 0.02;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = Math.max(p.alpha, 0);
-            ctx.fill();
-        });
-
-        ctx.restore();
-
-        if (particles.some(p => p.alpha > 0)) {
-            requestAnimationFrame(animateFirework);
-        }
-    }
-    animateFirework();
-}
-
-// 永久tree5/4閃爍
-function flashTreeForeverEffect() {
-    setInterval(() => {
-        currentTreeImage = (currentTreeImage === tree5) ? tree6 : tree5;
-        draw();
-    }, 250);
-}
-
-function gameLoop() {
-    if (needToShowWallDialogue) {
-        needToShowWallDialogue = false;
-        const confirmResult = confirm("確定要回去上個地圖嗎？");
-        if (confirmResult) {
-            window.location.href = "index2.html";
-        }
-    }
-    requestAnimationFrame(gameLoop);
-}
-
-// 啟動
-draw();
-animateTree();
-randomTreeEffect();
-randomCharacterEffect();
-randomBgEffect();
-gameLoop();
-</script>
-
-</body>
-</html>
+function openDialogue(text, buttons=[]) {
+    textBox.textContent = text;
+    btnBox.innerHTML = '';
+    buttons.forEach(b=>{
+        const btn=document.createElement('button');
+        btn.textContent=b.text;
+        btn.onclick=b.onClick;
+        btnBox.appendChild(btn);
+    });
+    overlay.style.display
