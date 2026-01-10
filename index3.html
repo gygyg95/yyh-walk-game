@@ -47,7 +47,7 @@ button:active {
     transform: scale(0.95);
 }
 
-/* ===== 遊戲內對話 ===== */
+/* ===== 對話層 ===== */
 #dialogueOverlay {
     position: fixed;
     inset: 0;
@@ -62,10 +62,10 @@ button:active {
     background: rgba(255,255,255,0.95);
     color: #000;
     padding: 20px;
-    border-radius: 14px;
+    border-radius: 16px;
     width: 85%;
     max-width: 520px;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.6;
     white-space: pre-wrap;
 }
@@ -98,7 +98,7 @@ button:active {
 
 <audio id="bgm" src="assets3/bgm.mp3" loop></audio>
 
-<!-- 對話層 -->
+<!-- 對話 UI -->
 <div id="dialogueOverlay">
     <div id="dialogueBox">
         <div id="dialogueText"></div>
@@ -112,7 +112,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight * 0.8;
 
-/* ===== 資源 ===== */
+/* ===== 圖片 ===== */
 const character = new Image();
 character.src = 'assets3/character.png';
 const character2 = new Image();
@@ -146,18 +146,208 @@ let dialogueShown = false;
 let isTypingMessage = false;
 let treeForeverFlash = false;
 
-/* ===== UI ===== */
-const overlay = document.getElementById('dialogueOverlay');
-const textBox = document.getElementById('dialogueText');
-const btnBox = document.getElementById('dialogueBtns');
+let leftWallDialogueCooldown = false;
 
-function openDialogue(text, buttons=[]) {
+/* ===== 對話 UI ===== */
+const overlay = document.getElementById("dialogueOverlay");
+const textBox = document.getElementById("dialogueText");
+const btnBox = document.getElementById("dialogueBtns");
+
+function openDialogue(text, buttons = []) {
     textBox.textContent = text;
-    btnBox.innerHTML = '';
-    buttons.forEach(b=>{
-        const btn=document.createElement('button');
-        btn.textContent=b.text;
-        btn.onclick=b.onClick;
+    btnBox.innerHTML = "";
+    buttons.forEach(b => {
+        const btn = document.createElement("button");
+        btn.textContent = b.text;
+        btn.onclick = b.onClick;
         btnBox.appendChild(btn);
     });
-    overlay.style.display
+    overlay.style.display = "flex";
+}
+
+function closeDialogue() {
+    overlay.style.display = "none";
+    dialogueShown = false;
+}
+
+/* ===== 繪製 ===== */
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(currentCharacterImage, x, y, 80, 120);
+    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 120);
+
+    if (!isTypingMessage && !treeForeverFlash) {
+        const nearTree = x > (treeX - 20) && x < (treeX + 60);
+        if (nearTree && !dialogueShown) {
+            dialogueShown = true;
+            startFinalStory();
+        }
+        if (!nearTree) dialogueShown = false;
+    }
+}
+
+/* ===== 最終劇情 ===== */
+function startFinalStory() {
+    treeForeverFlash = true;
+    flashTreeForeverEffect();
+
+    setTimeout(() => {
+        showTypingMessage(`不愧是聰明的你，我就知道你一定能發現這個被藏起來的地圖。
+
+這個小小的網頁遊戲，是我花了不少心思，悄悄為你準備的。
+
+或許它並不完美，但我希望，它能在你的世界裡，留下那麼一點溫柔的痕跡。
+
+其實我一直很嚮往那樣的未來，醒來就能看到你的笑容，上班的時候會開始想，下班要煮什麼好吃的給你，
+
+也很想在往後的日子裡，和你一起走過每一個平凡的日子、每一個節日，慢慢探索這個世界。
+
+這些想法，我都是很認真地放在心裡的，只是想誠實地告訴你，也想問問你，
+
+你願不願意，和我一起走看看呢？
+
+（我不管我就是要先放煙火）`);
+    }, 800);
+}
+
+/* ===== 打字機 ===== */
+function showTypingMessage(message) {
+    isTypingMessage = true;
+
+    const div = document.createElement("div");
+    Object.assign(div.style,{
+        position:"fixed",
+        top:"40%",
+        left:"50%",
+        transform:"translate(-50%,-50%)",
+        background:"rgba(255,255,255,0.95)",
+        padding:"20px",
+        borderRadius:"12px",
+        width:"85%",
+        maxWidth:"520px",
+        whiteSpace:"pre-wrap",
+        lineHeight:"1.6",
+        zIndex:9999,
+        transition:"opacity 1s"
+    });
+    document.body.appendChild(div);
+
+    let i = 0;
+    const t = setInterval(() => {
+        div.textContent += message.charAt(i++);
+        if (i >= message.length) {
+            clearInterval(t);
+            setTimeout(() => {
+                div.style.opacity = "0.5";
+                isTypingMessage = false;
+                triggerFireworks();
+            }, 1000);
+        }
+    }, 80);
+}
+
+/* ===== 煙火 ===== */
+function triggerFireworks() {
+    createFirework();
+    setTimeout(triggerFireworks, 500);
+}
+
+function createFirework() {
+    const colors = ["#ff4c4c","#ffd93d","#3dd9ff","#8c52ff","#ff6ec7"];
+    const cx = Math.random()*canvas.width;
+    const cy = Math.random()*canvas.height/2;
+    const ps=[];
+
+    for(let i=0;i<30;i++){
+        ps.push({
+            x:cx,y:cy,
+            r:2+Math.random()*2,
+            c:colors[Math.floor(Math.random()*colors.length)],
+            a:Math.random()*Math.PI*2,
+            s:2+Math.random()*5,
+            o:1
+        });
+    }
+
+    function anim(){
+        ctx.save();
+        ctx.globalCompositeOperation="lighter";
+        draw();
+        ps.forEach(p=>{
+            p.x+=Math.cos(p.a)*p.s;
+            p.y+=Math.sin(p.a)*p.s;
+            p.o-=0.02;
+            ctx.globalAlpha=Math.max(p.o,0);
+            ctx.beginPath();
+            ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=p.c;
+            ctx.fill();
+        });
+        ctx.restore();
+        if(ps.some(p=>p.o>0)) requestAnimationFrame(anim);
+    }
+    anim();
+}
+
+/* ===== 樹永久閃 ===== */
+function flashTreeForeverEffect(){
+    setInterval(()=>{
+        currentTreeImage = currentTreeImage===tree5 ? tree6 : tree5;
+    },250);
+}
+
+/* ===== 動畫 & 控制 ===== */
+function animateTree(){
+    treeMoveDistance+=treeDirection*0.5;
+    if(treeMoveDistance>3||treeMoveDistance<-3) treeDirection*=-1;
+    draw();
+    requestAnimationFrame(animateTree);
+}
+
+function playBGM(){ if(!bgmPlayed){bgm.play();bgmPlayed=true;} }
+
+function moveLeft(){
+    playBGM();
+    x=Math.max(0,x-speed);
+    if(x===0 && !leftWallDialogueCooldown){
+        leftWallDialogueCooldown=true;
+        openDialogue("要回去上一張地圖嗎？",[
+            {text:"回去",onClick:()=>location.href="index2.html"},
+            {text:"留下",onClick:closeDialogue}
+        ]);
+        setTimeout(()=>leftWallDialogueCooldown=false,3000);
+    }
+}
+
+function moveRight(){
+    playBGM();
+    x=Math.min(canvas.width-80,x+speed);
+}
+
+/* ===== 啟動 ===== */
+draw();
+animateTree();
+randomCharacterEffect();
+randomBgEffect();
+
+function randomCharacterEffect(){
+    setTimeout(()=>{
+        currentCharacterImage=character2;
+        setTimeout(()=>currentCharacterImage=character,500);
+        randomCharacterEffect();
+    },2000+Math.random()*3000);
+}
+
+function randomBgEffect(){
+    setTimeout(()=>{
+        canvas.style.backgroundImage="url('assets3/grass_bg2.png')";
+        setTimeout(()=>{
+            canvas.style.backgroundImage="url('assets3/grass_bg.png')";
+            randomBgEffect();
+        },250);
+    },2000+Math.random()*2000);
+}
+</script>
+
+</body>
+</html>
