@@ -128,10 +128,10 @@ function animateTree() {
 function randomTreeEffect() {
     if (treeSpecialEffectActive || treeForeverFlash) return;
     setTimeout(() => {
-        currentTreeImage = tree2;
+        currentTreeImage = tree;
         draw();
         setTimeout(() => {
-            currentTreeImage = tree;
+            currentTreeImage = tree2;
             draw();
             randomTreeEffect();
         }, 500);
