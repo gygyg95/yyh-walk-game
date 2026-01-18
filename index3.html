@@ -81,7 +81,7 @@ let currentTreeImage = tree;
 
 const bgm = document.getElementById('bgm');
 
-let x = 135;
+let x = 100;
 let y = 430;
 let speed = 7.5;
 let dialogueShown = false;
@@ -101,8 +101,8 @@ canvas.height = window.innerHeight * 0.8;
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(currentCharacterImage, x, y, 80, 135);
-    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 80, 135);
+    ctx.drawImage(currentCharacterImage, x, y, 70, 120);
+    ctx.drawImage(currentTreeImage, treeX, treeY + treeMoveDistance, 70, 120
 
     if (!isTypingMessage) {
         if (x > (treeX - 20) && x < (treeX + 60)) {
