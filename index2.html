@@ -123,8 +123,8 @@ function dropTree(callback) {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(currentCharacterImage, x, y, 80, 135);
-    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, treeY, 80, 135);
+    ctx.drawImage(currentCharacterImage, x, y, 70, 120);
+    ctx.drawImage(currentTreeImage, treeX + treeMoveDistance, treeY, 70, 120);
 
     // 角色靠近樹就觸發對話
     if (x > (treeX + treeMoveDistance - 20) && x < (treeX + treeMoveDistance + 60)) {
